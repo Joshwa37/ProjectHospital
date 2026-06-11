@@ -1,0 +1,132 @@
+<div class="landing-page">
+  <!-- Nav Bar -->
+  <nav class="nav-bar glass-card">
+    <div class="container flex-between">
+      <div class="logo">
+        <span class="icon">🏥</span>
+        <span class="logo-text">MediFlow</span>
+      </div>
+      <div class="nav-links">
+        <a routerLink="/tokens" target="_blank" class="nav-link btn btn-secondary">
+          <span>📺</span> Token Display
+        </a>
+        <a routerLink="/admin" class="nav-link btn btn-primary">
+          <span>🔐</span> Receptionist Login
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section container">
+    <div class="hero-grid">
+      <div class="hero-text">
+        <h1 class="hero-title">Your Health, <br><span class="gradient-text">Our Priority</span></h1>
+        <p class="hero-subtitle">
+          Experience seamless, smart healthcare booking. Get real-time queue status, instant tokens, and live updates. We value your time.
+        </p>
+        <div class="hero-actions">
+          <a routerLink="/book" class="btn btn-primary btn-lg">
+            <span>📅</span> Book Appointment
+          </a>
+          <button (click)="scrollToDoctors()" class="btn btn-secondary btn-lg">
+            <span>🩺</span> Doctor Details
+          </button>
+        </div>
+      </div>
+      <div class="hero-image-container">
+        <div class="image-wrapper glass-card">
+          <img src="/hospital_lobby.png" alt="MediFlow Hospital Lobby" class="hero-image" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Us Section -->
+  <section class="about-section container">
+    <div class="glass-card about-card">
+      <div class="about-grid">
+        <div class="about-header">
+          <span class="badge badge-primary">About MediFlow</span>
+          <h2>Redefining Hospital Queue Management</h2>
+          <p>
+            MediFlow is a state-of-the-art medical center dedicated to providing top-tier clinical healthcare. 
+            By integrating real-time bank-style token tracking, we eliminate long waiting room hours. Register, 
+            receive your token, and track your queue live on the dashboard or via instant WhatsApp updates.
+          </p>
+        </div>
+        <!-- Achievements Grid -->
+        <div class="achievements-grid">
+          <div class="achievement-card">
+            <span class="ach-icon">👥</span>
+            <h3>15,000+</h3>
+            <p>Happy Patients</p>
+          </div>
+          <div class="achievement-card">
+            <span class="ach-icon">⚡</span>
+            <h3>24/7</h3>
+            <p>Emergency Services</p>
+          </div>
+          <div class="achievement-card">
+            <h3>50+</h3>
+            <p>Expert Doctors</p>
+          </div>
+          <div class="achievement-card">
+            <h3>98%</h3>
+            <p>Satisfaction Rate</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Doctor Showcase -->
+  <section id="doctor-showcase" class="doctors-section container">
+    <div class="section-header">
+      <span class="badge badge-primary">Our Specialists</span>
+      <h2>Meet Our Medical Team</h2>
+      <p>Consult with our highly qualified doctors across multiple departments.</p>
+    </div>
+
+    <div *ngIf="loading" class="flex-center loading-container">
+      <div class="spinner"></div>
+      <p>Loading medical team...</p>
+    </div>
+
+    <div *ngIf="!loading" class="doctors-grid">
+      <div *ngFor="let doctor of doctors" class="doctor-card glass-card">
+        <div class="doc-header">
+          <div class="doc-avatar flex-center">
+            <span>🧑‍⚕️</span>
+          </div>
+          <div class="doc-title">
+            <h3>{{ doctor.name }}</h3>
+            <p class="specialty">{{ doctor.specialty }}</p>
+          </div>
+        </div>
+        <div class="doc-body">
+          <div class="info-row">
+            <span class="label">Location:</span>
+            <span class="value">{{ doctor.cabinNumber }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Status:</span>
+            <span class="badge" [ngClass]="getStatusBadgeClass(doctor.status)">
+              {{ doctor.status }}
+            </span>
+          </div>
+        </div>
+        <div class="doc-footer">
+          <a routerLink="/book" [queryParams]="{ doctorId: doctor._id }" class="btn btn-primary btn-block">
+            <span>📅</span> Request Booking
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer container">
+    <p>&copy; 2026 MediFlow Hospital. All rights reserved.</p>
+  </footer>
+</div>

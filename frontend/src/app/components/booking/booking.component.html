@@ -1,0 +1,171 @@
+<div class="booking-page container">
+  <!-- Nav Header -->
+  <header class="page-header flex-between">
+    <div class="logo">
+      <span class="icon">🏥</span>
+      <span class="logo-text">MediFlow</span>
+    </div>
+    <a routerLink="/" class="btn btn-secondary">
+      <span>⬅</span> Back to Home
+    </a>
+  </header>
+
+  <!-- State 1: Booking Form -->
+  <div *ngIf="!success" class="booking-card glass-card">
+    <div class="card-header text-center">
+      <span class="badge badge-primary">Scheduling</span>
+      <h2>Book Doctor Appointment</h2>
+      <p>Fill out the fields to request an appointment slot. The receptionist will confirm and generate your token.</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #bookingForm="ngForm" class="booking-form">
+      <div *ngIf="errorMessage" class="alert-message badge badge-danger">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Grid for Patient Details -->
+      <h3 class="section-title">1. Patient Information</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="name">Full Name</label>
+          <input type="text" id="name" name="name" [(ngModel)]="name" required placeholder="John Doe" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone Number (For WhatsApp Alerts)</label>
+          <input type="tel" id="phone" name="phone" [(ngModel)]="phone" required placeholder="+91 98765 43210" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="age">Age</label>
+          <input type="number" id="age" name="age" [(ngModel)]="age" required min="1" max="120" placeholder="e.g. 29" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="gender">Gender</label>
+          <select id="gender" name="gender" [(ngModel)]="gender" required class="form-control">
+            <option value="" disabled selected>Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reason">Reason (What happened?)</label>
+        <textarea id="reason" name="reason" [(ngModel)]="reason" required rows="3" placeholder="Describe symptoms (e.g. High fever with chills since last night)" class="form-control"></textarea>
+      </div>
+
+      <!-- Grid for Appointment Details -->
+      <h3 class="section-title">2. Choose Department & Doctor</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label" for="specialty">Specialization</label>
+          <select id="specialty" name="specialty" [(ngModel)]="selectedSpecialty" (change)="onSpecialtyChange()" required class="form-control">
+            <option value="" disabled selected>Select Specialty</option>
+            <option *ngFor="let spec of specialties" [value]="spec">{{ spec }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="doctor">Doctor</label>
+          <select id="doctor" name="doctor" [(ngModel)]="selectedDoctorId" required [disabled]="!selectedSpecialty" class="form-control">
+            <option value="" disabled selected>Select Doctor</option>
+            <option *ngFor="let doc of filteredDoctors" [value]="doc._id">
+              {{ doc.name }} ({{ doc.cabinNumber }})
+            </option>
+          </select>
+          <small *ngIf="selectedSpecialty && filteredDoctors.length === 0" class="help-text text-danger">
+            No doctors available in this specialty.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="date">Preferred Date</label>
+          <input type="date" id="date" name="date" [(ngModel)]="appointmentDate" required class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="time">Preferred Time Slot</label>
+          <select id="time" name="time" [(ngModel)]="timeSlot" required class="form-control">
+            <option value="" disabled selected>Select Time Slot</option>
+            <option *ngFor="let slot of timeSlots" [value]="slot">{{ slot }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-actions text-center">
+        <button type="submit" [disabled]="loading" class="btn btn-primary btn-lg btn-submit">
+          <span *ngIf="loading" class="btn-spinner"></span>
+          <span>📅 Request Appointment</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- State 2: Success Ticket Details -->
+  <div *ngIf="success && bookedTicket" class="ticket-container flex-center">
+    <div class="ticket-card glass-card">
+      <div class="ticket-header">
+        <div class="success-icon flex-center">✔</div>
+        <h2>Request Sent!</h2>
+        <p>Your appointment has been logged successfully.</p>
+      </div>
+
+      <div class="ticket-body">
+        <div class="ticket-meta">
+          <span class="ticket-label">Patient ID</span>
+          <span class="ticket-value highlight">{{ bookedTicket.patient.patientId }}</span>
+        </div>
+        
+        <div class="ticket-divider"></div>
+
+        <div class="ticket-details-grid">
+          <div class="meta-item">
+            <span class="ticket-label">Patient Name</span>
+            <span class="ticket-value">{{ bookedTicket.patient.name }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="ticket-label">Phone</span>
+            <span class="ticket-value">{{ bookedTicket.patient.phone }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="ticket-label">Doctor</span>
+            <span class="ticket-value">{{ bookedTicket.doctor.name }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="ticket-label">Department</span>
+            <span class="ticket-value">{{ bookedTicket.doctor.specialty }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="ticket-label">Date & Time</span>
+            <span class="ticket-value">{{ bookedTicket.date }} at {{ bookedTicket.timeSlot }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="ticket-label">Cabin</span>
+            <span class="ticket-value">{{ bookedTicket.doctor.cabinNumber }}</span>
+          </div>
+        </div>
+
+        <div class="ticket-divider"></div>
+
+        <div class="ticket-status flex-between">
+          <span>Appointment Status:</span>
+          <span class="badge badge-warning">PENDING CONFIRMATION</span>
+        </div>
+
+        <p class="ticket-instructions">
+          📢 A simulated message has been dispatched to <strong>{{ bookedTicket.patient.phone }}</strong>. 
+          Once the receptionist confirms your appointment, you will receive a second notification containing your <strong>Token Number</strong>.
+        </p>
+      </div>
+
+      <div class="ticket-footer text-center">
+        <button (click)="bookAnother()" class="btn btn-primary">
+          <span>📅</span> Book Another Appointment
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

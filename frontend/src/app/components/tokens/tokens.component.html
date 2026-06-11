@@ -1,0 +1,87 @@
+<div class="tv-dashboard" [class.fullscreen]="isFullscreen">
+  <!-- TV Dashboard Header -->
+  <header class="tv-header flex-between">
+    <div class="tv-logo">
+      <span class="pulse-dot"></span>
+      <span class="logo-text">MEDIFLOW LIVE BOARD</span>
+    </div>
+    <div class="tv-datetime flex-center">
+      <span class="time">{{ currentTime | date:'hh:mm:ss a' }}</span>
+      <span class="date">{{ currentTime | date:'EEEE, d MMMM y' }}</span>
+    </div>
+    <div class="tv-actions">
+      <button (click)="toggleFullscreen()" class="btn btn-secondary btn-sm tv-fs-btn">
+        <span>{{ isFullscreen ? '📺 Exit Fullscreen' : '📺 Enter Fullscreen' }}</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- TV Grid Workspace -->
+  <main class="tv-grid">
+    <!-- Left: Now Serving Section (Massive Cards) -->
+    <section class="serving-section">
+      <div class="section-title-bar">
+        <h2>📢 NOW SERVING</h2>
+      </div>
+
+      <div *ngIf="activeConsultations.length === 0" class="empty-serving flex-center">
+        <div class="empty-serving-content text-center">
+          <span class="waiting-icon">🩺</span>
+          <h3>Please Wait</h3>
+          <p>Next patients will be called shortly. Please keep an eye on your token number.</p>
+        </div>
+      </div>
+
+      <div *ngIf="activeConsultations.length > 0" class="serving-cards-grid">
+        <div *ngFor="let appt of activeConsultations" 
+             class="serving-card glass-card"
+             [class.flash-active]="recentlyCalledToken === appt.tokenNumber && recentlyCalledDoctorId === appt.doctor?.name">
+          <div class="card-left text-center">
+            <span class="token-label">TOKEN</span>
+            <span class="token-num">{{ appt.tokenNumber | number:'2.0' }}</span>
+          </div>
+          <div class="card-right">
+            <div class="doctor-details">
+              <h3>{{ appt.doctor?.name }}</h3>
+              <p class="specialty">{{ appt.doctor?.specialty }}</p>
+            </div>
+            <div class="cabin-indicator">
+              <span class="cabin-label">PROCEED TO</span>
+              <span class="cabin-num">{{ appt.doctor?.cabinNumber }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Next Up Queue Section -->
+    <section class="queue-section glass-card">
+      <div class="queue-title-bar">
+        <h2>📋 NEXT UP</h2>
+      </div>
+
+      <div class="queue-list">
+        <div *ngIf="nextUpQueue.length === 0" class="empty-queue flex-center">
+          <p>No upcoming patients in queue.</p>
+        </div>
+
+        <div *ngFor="let appt of nextUpQueue" class="queue-item flex-between">
+          <div class="queue-token flex-center">
+            <span>#{{ appt.tokenNumber | number:'2.0' }}</span>
+          </div>
+          <div class="queue-patient">
+            <strong>{{ appt.patient?.name }}</strong>
+            <div class="queue-doc">{{ appt.doctor?.name }} ({{ appt.doctor?.specialty }})</div>
+          </div>
+          <div class="queue-cabin">
+            <span>{{ appt.doctor?.cabinNumber }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="queue-footer">
+        <p>🔔 Keep your mobile ready for WhatsApp updates</p>
+      </div>
+    </section>
+  </main>
+</div>

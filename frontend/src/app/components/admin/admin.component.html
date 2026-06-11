@@ -1,0 +1,382 @@
+<!-- State 1: Login Screen -->
+<div *ngIf="!isLoggedIn" class="login-container flex-center">
+  <div class="login-card glass-card">
+    <div class="login-header text-center">
+      <span class="logo-icon">🏥</span>
+      <h2>MediFlow Admin</h2>
+      <p>Please log in using receptionist credentials to access the queue management dashboard.</p>
+    </div>
+    
+    <form (ngSubmit)="handleLogin()" class="login-form">
+      <div *ngIf="loginError" class="badge badge-danger login-alert">
+        {{ loginError }}
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" [(ngModel)]="username" required placeholder="e.g. admin" class="form-control" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" [(ngModel)]="password" required placeholder="••••••••" class="form-control" />
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        <span>🔓</span> Login to Dashboard
+      </button>
+    </form>
+    
+    <div class="text-center default-creds">
+      <small>Default credentials: <strong>admin</strong> / <strong>admin123</strong></small>
+    </div>
+  </div>
+</div>
+
+<!-- State 2: Receptionist Dashboard -->
+<div *ngIf="isLoggedIn" class="dashboard-page">
+  <!-- Top Navigation Header -->
+  <header class="dash-header glass-card">
+    <div class="flex-between">
+      <div class="logo">
+        <span class="icon">🏥</span>
+        <span class="logo-text">MediFlow Receptionist</span>
+      </div>
+      <div class="header-actions">
+        <a routerLink="/tokens" target="_blank" class="btn btn-secondary">
+          <span>📺</span> Token Board TV
+        </a>
+        <button (click)="handleLogout()" class="btn btn-danger">
+          <span>🚪</span> Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Statistics Grid -->
+  <section class="stats-grid container">
+    <div class="stat-card glass-card">
+      <span class="stat-icon">👨‍⚕️</span>
+      <div class="stat-info">
+        <h3>{{ stats.activeDoctors }}</h3>
+        <p>Active Doctors</p>
+      </div>
+    </div>
+    <div class="stat-card glass-card">
+      <span class="stat-icon warning">📅</span>
+      <div class="stat-info">
+        <h3>{{ stats.pendingBookings }}</h3>
+        <p>Pending Requests</p>
+      </div>
+    </div>
+    <div class="stat-card glass-card">
+      <span class="stat-icon primary">👥</span>
+      <div class="stat-info">
+        <h3>{{ stats.waitingPatients }}</h3>
+        <p>Waiting in Queue</p>
+      </div>
+    </div>
+    <div class="stat-card glass-card">
+      <span class="stat-icon success">✔</span>
+      <div class="stat-info">
+        <h3>{{ stats.completedToday }}</h3>
+        <p>Completed Consultations</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Workspace Grid -->
+  <main class="workspace-grid container">
+    <!-- Left Workspace: Tables & Controls -->
+    <div class="main-panel glass-card">
+      <div class="panel-header flex-between">
+        <div class="tab-triggers">
+          <button (click)="activeTab = 'pending'" [class.active]="activeTab === 'pending'" class="tab-btn">
+            Pending Requests ({{ pendingRequests.length }})
+          </button>
+          <button (click)="activeTab = 'active'" [class.active]="activeTab === 'active'" class="tab-btn">
+            Active Appointments ({{ activeAppointments.length }})
+          </button>
+          <button (click)="activeTab = 'history'" [class.active]="activeTab === 'history'" class="tab-btn">
+            History Log
+          </button>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <!-- TAB 1: Pending Requests Table -->
+        <div *ngIf="activeTab === 'pending'" class="tab-content">
+          <div *ngIf="pendingRequests.length === 0" class="empty-state text-center">
+            <span class="empty-icon">📭</span>
+            <h4>No Pending Requests</h4>
+            <p>All appointment requests have been processed.</p>
+          </div>
+
+          <div *ngIf="pendingRequests.length > 0" class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Patient ID</th>
+                  <th>Patient Detail</th>
+                  <th>Reason (Complaint)</th>
+                  <th>Assigned Doctor</th>
+                  <th>Requested Slot</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let appt of pendingRequests">
+                  <td><span class="patient-id-badge">{{ appt.patient?.patientId }}</span></td>
+                  <td>
+                    <strong>{{ appt.patient?.name }}</strong>
+                    <div class="subtext">{{ appt.patient?.age }} yrs, {{ appt.patient?.gender }}</div>
+                    <div class="subtext">{{ appt.patient?.phone }}</div>
+                  </td>
+                  <td class="reason-cell">"{{ appt.reason }}"</td>
+                  <td>
+                    <strong>{{ appt.doctor?.name }}</strong>
+                    <div class="subtext specialty">{{ appt.doctor?.specialty }}</div>
+                  </td>
+                  <td>
+                    <div>{{ appt.date }}</div>
+                    <div class="subtext">{{ appt.timeSlot }}</div>
+                  </td>
+                  <td class="action-cell">
+                    <button (click)="acceptRequest(appt._id)" class="btn btn-success btn-sm">
+                      ✔ Accept
+                    </button>
+                    <button (click)="openRejectModal(appt)" class="btn btn-danger btn-sm">
+                      ✖ Reject
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 2: Active Appointments Table -->
+        <div *ngIf="activeTab === 'active'" class="tab-content">
+          <div *ngIf="activeAppointments.length === 0" class="empty-state text-center">
+            <span class="empty-icon">👥</span>
+            <h4>No Active Appointments Today</h4>
+            <p>Accept booking requests to populate today's active queues.</p>
+          </div>
+
+          <div *ngIf="activeAppointments.length > 0" class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Token</th>
+                  <th>Patient Details</th>
+                  <th>Doctor & Cabin</th>
+                  <th>Complaint</th>
+                  <th>Status</th>
+                  <th>Queue Management</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let appt of activeAppointments" [class.serving-tr]="appt.status === 'In Consultation'">
+                  <td>
+                    <span class="token-badge" [class.serving]="appt.status === 'In Consultation'">
+                      #{{ appt.tokenNumber }}
+                    </span>
+                  </td>
+                  <td>
+                    <strong>{{ appt.patient?.name }}</strong>
+                    <div class="subtext">{{ appt.patient?.patientId }}</div>
+                    <div class="subtext">{{ appt.patient?.phone }}</div>
+                  </td>
+                  <td>
+                    <strong>{{ appt.doctor?.name }}</strong>
+                    <div class="subtext text-primary">{{ appt.doctor?.cabinNumber }}</div>
+                  </td>
+                  <td class="reason-cell">"{{ appt.reason }}"</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'badge-success': appt.status === 'In Consultation',
+                      'badge-primary': appt.status === 'Confirmed',
+                      'badge-warning': appt.status === 'Rescheduled'
+                    }">
+                      {{ appt.status === 'In Consultation' ? 'Serving' : appt.status }}
+                    </span>
+                  </td>
+                  <td class="action-cell">
+                    <button *ngIf="appt.status !== 'In Consultation'" (click)="callPatient(appt._id)" class="btn btn-primary btn-sm">
+                      📢 Call Patient
+                    </button>
+                    <button *ngIf="appt.status === 'In Consultation'" (click)="callPatient(appt._id)" class="btn btn-primary btn-sm flash-active">
+                      🔊 Re-Call
+                    </button>
+                    <button (click)="finishConsultation(appt._id)" class="btn btn-success btn-sm">
+                      ✔ Finished
+                    </button>
+                    <button (click)="openRescheduleModal(appt)" class="btn btn-secondary btn-sm">
+                      📅 Reschedule
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Doctor Status Controls Panel (Crucial for Receptionist workflow) -->
+          <div class="doctor-control-panel">
+            <h3 class="panel-subtitle">🩺 Doctor Availability & Emergency Triggers</h3>
+            <div class="doctor-control-grid">
+              <div *ngFor="let doc of doctors" class="doc-control-card glass-card">
+                <div class="doc-card-title flex-between">
+                  <div>
+                    <h4>{{ doc.name }}</h4>
+                    <p class="specialty">{{ doc.specialty }} - {{ doc.cabinNumber }}</p>
+                  </div>
+                  <select [value]="doc.status" (change)="updateDocStatus(doc._id, $event)" class="status-select">
+                    <option value="Available">Available</option>
+                    <option value="On Break">On Break</option>
+                    <option value="Unavailable">Unavailable</option>
+                  </select>
+                </div>
+                <div class="doc-card-actions">
+                  <button (click)="triggerDoctorEmergency(doc._id)" class="btn btn-danger btn-block btn-sm">
+                    ⚠️ Trigger Emergency Delay Alert
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: History Log Table -->
+        <div *ngIf="activeTab === 'history'" class="tab-content">
+          <div *ngIf="historyAppointments.length === 0" class="empty-state text-center">
+            <span class="empty-icon">📁</span>
+            <h4>No Log History</h4>
+            <p>Records of completed or rejected appointments will appear here.</p>
+          </div>
+
+          <div *ngIf="historyAppointments.length > 0" class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Patient Detail</th>
+                  <th>Doctor</th>
+                  <th>Date & Time</th>
+                  <th>Reason / Details</th>
+                  <th>Final Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let appt of historyAppointments">
+                  <td>
+                    <strong>{{ appt.patient?.name }}</strong>
+                    <div class="subtext">{{ appt.patient?.patientId }}</div>
+                  </td>
+                  <td>
+                    <strong>{{ appt.doctor?.name }}</strong>
+                    <div class="subtext specialty">{{ appt.doctor?.specialty }}</div>
+                  </td>
+                  <td>
+                    <div>{{ appt.date }}</div>
+                    <div class="subtext">{{ appt.timeSlot }}</div>
+                  </td>
+                  <td class="reason-cell">
+                    <div><strong>Complaint:</strong> "{{ appt.reason }}"</div>
+                    <div *ngIf="appt.status === 'Rejected'" class="text-danger">
+                      <strong>Decline Reason:</strong> "{{ appt.rejectionReason }}"
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'badge-success': appt.status === 'Completed',
+                      'badge-danger': appt.status === 'Rejected'
+                    }">
+                      {{ appt.status }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Workspace: Simulated WhatsApp Notification Feed -->
+    <div class="whatsapp-panel glass-card">
+      <div class="whatsapp-header">
+        <span class="wa-badge">🟢 LIVE</span>
+        <h3>Simulated WhatsApp Feed</h3>
+        <p>Live outgoing notifications broadcasted from the server database triggers.</p>
+      </div>
+
+      <div class="whatsapp-feed">
+        <div *ngIf="whatsappLogs.length === 0" class="empty-feed text-center">
+          <span class="wa-empty-icon">💬</span>
+          <p>No messages sent yet. Message logs will show up here as actions happen.</p>
+        </div>
+
+        <div *ngFor="let log of whatsappLogs" class="whatsapp-bubble" [ngClass]="log.eventType.toLowerCase()">
+          <div class="bubble-header flex-between">
+            <span class="wa-recipient">To: {{ log.to }} ({{ log.patientName }})</span>
+            <span class="wa-time">{{ log.timestamp | date:'shortTime' }}</span>
+          </div>
+          <p class="bubble-body">"{{ log.body }}"</p>
+          <div class="bubble-footer">
+            <span class="badge" [ngClass]="{
+              'badge-primary': log.eventType === 'Applied',
+              'badge-success': log.eventType === 'Confirmed',
+              'badge-danger': log.eventType === 'Rejected',
+              'badge-warning': log.eventType === 'NextUp' || log.eventType === 'Rescheduled' || log.eventType === 'Emergency'
+            }">
+              {{ log.eventType }}
+            </span>
+            <span class="wa-patid">ID: {{ log.patientId }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal 1: Custom Rejection Message Modal -->
+<div *ngIf="showRejectModal" class="modal-overlay flex-center">
+  <div class="modal-card glass-card">
+    <h3>Decline Appointment Request</h3>
+    <p class="modal-desc">Type a custom message explaining why the appointment is declined. This text is sent to the patient on WhatsApp.</p>
+    
+    <div class="form-group">
+      <label class="form-label">WhatsApp Notification Content</label>
+      <textarea [(ngModel)]="customRejectionReason" rows="4" class="form-control"></textarea>
+    </div>
+
+    <div class="modal-actions flex-between">
+      <button (click)="closeRejectModal()" class="btn btn-secondary">Cancel</button>
+      <button (click)="submitReject()" class="btn btn-danger">Confirm Decline & Send Notification</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 2: Reschedule Appointment Modal -->
+<div *ngIf="showRescheduleModal" class="modal-overlay flex-center">
+  <div class="modal-card glass-card">
+    <h3>Reschedule Appointment</h3>
+    <p class="modal-desc">Reschedule the patient's slot. A notification with details and their token number will be dispatched to their WhatsApp.</p>
+    
+    <div class="form-group">
+      <label class="form-label">New Appointment Date</label>
+      <input type="date" [(ngModel)]="newRescheduleDate" class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">New Time Slot</label>
+      <select [(ngModel)]="newRescheduleTimeSlot" class="form-control">
+        <option *ngFor="let slot of timeSlots" [value]="slot">{{ slot }}</option>
+      </select>
+    </div>
+
+    <div class="modal-actions flex-between">
+      <button (click)="closeRescheduleModal()" class="btn btn-secondary">Cancel</button>
+      <button (click)="submitReschedule()" class="btn btn-primary">Update Slot & Alert Patient</button>
+    </div>
+  </div>
+</div>

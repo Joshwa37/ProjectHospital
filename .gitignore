@@ -1,0 +1,12 @@
+backend/node_modules
+backend/.env
+backend/package-lock.json
+backend/package.json
+frontend/node_modules
+frontend/.angular
+frontend/.vscode
+frontend/dist
+frontend/tmp
+frontend/out-tsc
+frontend/bazel-out
+
